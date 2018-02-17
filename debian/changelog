@@ -1,3 +1,9 @@
+backuppc (4.1.5~eebpo90+1) stretch-ee; urgency=medium
+
+  * Release for stretch-ee distribution
+
+ -- Benjamin Renard <brenard@easter-eggs.com>  Sat, 17 Feb 2018 12:19:53 +0100
+
 backuppc (4.1.5) stable; urgency=medium
 
   * TODO
