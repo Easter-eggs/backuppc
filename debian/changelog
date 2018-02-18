@@ -1,3 +1,13 @@
+backuppc (4.1.5~eebpo90+4) stretch-ee; urgency=medium
+
+  * Use more user-frendly /bin/bash as backuppc shell
+  * Fix missing libcgi-pm-perl dependency
+  * Improve/fix default /etc/backuppc/config.pl file
+  * Fix copyright in default /etc/backuppc/hosts file
+  * Remove default config.pl.sample and hosts.sample files from /etc/backuppc
+
+ -- Benjamin Renard <brenard@easter-eggs.com>  Sun, 18 Feb 2018 16:05:06 +0100
+
 backuppc (4.1.5~eebpo90+3) stretch-ee; urgency=medium
 
   * Fix default RsyncClientPath and RsyncBackupPCPath values
