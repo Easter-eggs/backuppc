@@ -12,15 +12,6 @@
  
  #
  # TCP port number on which the BackupPC server listens for and accepts
-@@ -275,7 +278,7 @@
- # Full path to various commands for archiving
- #
- $Conf{SplitPath} = '/usr/bin/split';
--$Conf{ParPath}   = '';
-+$Conf{ParPath}   = '/usr/bin/par2' if -x '/usr/bin/par2';
- $Conf{CatPath}   = '/bin/cat';
- $Conf{GzipPath}  = '/bin/gzip';
- $Conf{Bzip2Path} = '/bin/bzip2';
 @@ -325,7 +328,7 @@
  #
  # The BackupPC user.
@@ -84,12 +75,3 @@
  
  #
  # Full path to the rrdtool command.  If available, graphs of pool usage
-@@ -2024,7 +2027,7 @@
- # Security caution: normal users should not allowed to write to this file
- # or directory.
- #
--$Conf{RrdToolPath} = '';
-+$Conf{RrdToolPath} = '/usr/bin/rrdtool';
- 
- #   
- # Language to use.  See lib/BackupPC/Lang for the list of supported
