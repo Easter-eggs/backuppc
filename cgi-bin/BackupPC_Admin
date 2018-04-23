@@ -82,6 +82,11 @@ my %ActionDispatch = (
     "adminOpts"                  => "AdminOptions",
     "editConfig"                 => "EditConfig",
     "rss"                        => "RSS",
+    "stats"                      => "Stats",
+    "browsejson"                 => "BrowseJSON",
+    "RestoreFileJSON"            => "RestoreFileJSON",
+    "RestoreJSON"                => "RestoreJSON",
+
 );
 
 #

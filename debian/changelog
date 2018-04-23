@@ -1,3 +1,10 @@
+backuppc (4.2.0~eebpo90+2) stretch-ee; urgency=medium
+
+  * Non-maintainer upload.
+  * Add EE custom script
+
+ -- Arnaud Virlet <avirlet@easter-eggs.com>  Mon, 23 Apr 2018 15:42:32 +0200
+
 backuppc (4.2.0~eebpo90+1) stretch-ee; urgency=medium
 
   * Backups can now be deleted via the CGI interface, written by @moisseev (#160).
