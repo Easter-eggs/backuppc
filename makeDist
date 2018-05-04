@@ -110,7 +110,6 @@ my @PerlSrc = qw(
     lib/BackupPC/CGI/Archive.pm
     lib/BackupPC/CGI/ArchiveInfo.pm
     lib/BackupPC/CGI/Browse.pm
-    lib/BackupPC/CGI/BrowseJSON.pm
     lib/BackupPC/CGI/DeleteBackup.pm
     lib/BackupPC/CGI/DirHistory.pm
     lib/BackupPC/CGI/EditConfig.pm
@@ -122,14 +121,11 @@ my @PerlSrc = qw(
     lib/BackupPC/CGI/Queue.pm
     lib/BackupPC/CGI/ReloadServer.pm
     lib/BackupPC/CGI/Restore.pm
-    lib/BackupPC/CGI/RestoreJSON.pm
     lib/BackupPC/CGI/RestoreFile.pm
-    lib/BackupPC/CGI/RestoreFileJSON.pm
     lib/BackupPC/CGI/RestoreInfo.pm
     lib/BackupPC/CGI/RSS.pm
     lib/BackupPC/CGI/StartServer.pm
     lib/BackupPC/CGI/StartStopBackup.pm
-    lib/BackupPC/CGI/Stats.pm
     lib/BackupPC/CGI/StopServer.pm
     lib/BackupPC/CGI/Summary.pm
     lib/BackupPC/CGI/View.pm
