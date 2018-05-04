@@ -122,7 +122,8 @@ binary-arch: build install
 	dh_testdir
 	dh_testroot
 #	dh_installdebconf	
-	dh_installdocs 
+	mkdir -p debian/backuppc/usr/share/doc/backuppc
+	install --mode=644 debian/backuppc.doc-base debian/backuppc/usr/share/doc/backuppc/
 	dh_installexamples debian/examples/*
 	mv -f debian/backuppc/usr/share/backuppc/share/doc/* debian/backuppc/usr/share/doc/backuppc/
 	mv debian/backuppc/usr/share/doc/backuppc/BackupPC/* debian/backuppc/usr/share/doc/backuppc/

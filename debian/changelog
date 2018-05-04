@@ -1,3 +1,9 @@
+eebackuppc4 (4.2.0~eebpo90+3) stretch-ee; urgency=medium
+
+  * Build custom backuppc package
+
+ -- Arnaud Virlet <avirlet@easter-eggs.com>  Fri, 04 May 2018 17:55:23 +0200
+
 backuppc (4.2.0~eebpo90+2) stretch-ee; urgency=medium
 
   * Non-maintainer upload.
