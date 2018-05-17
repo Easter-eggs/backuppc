@@ -1,3 +1,9 @@
+eebackuppc4 (4.2.0~eebpo90+4) UNRELEASED; urgency=medium
+
+  * fix broken package 
+
+ -- Arnaud Virlet <avirlet@easter-eggs.com>  Thu, 17 May 2018 13:51:42 +0200
+
 eebackuppc4 (4.2.0~eebpo90+3) stretch-ee; urgency=medium
 
   * Build custom backuppc package

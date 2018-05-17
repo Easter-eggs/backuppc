@@ -1,5 +1,5 @@
---- debian/backuppc/etc/backuppc/config.pl	2018-02-18 15:47:01.023059724 +0100
-+++ debian/backuppc/etc/backuppc/config.pl	2018-02-18 15:46:28.394935123 +0100
+--- debian/eebackuppc4/etc/backuppc/config.pl	2018-02-18 15:47:01.023059724 +0100
++++ debian/eebackuppc4/etc/backuppc/config.pl	2018-02-18 15:46:28.394935123 +0100
 @@ -41,7 +41,10 @@
  #
  # Host name on which the BackupPC server is running.

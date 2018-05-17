@@ -3,7 +3,7 @@
 # GNU copyright 1997 to 1999 by Joey Hess.
 
 # Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+export DH_VERBOSE=1
 
 CPPFLAGS:=$(shell dpkg-buildflags --get CPPFLAGS)
 CFLAGS:=$(shell dpkg-buildflags --get CFLAGS)
@@ -59,7 +59,7 @@ install: build
 	dh_prep
 	dh_installdirs
 
-	# Add here commands to install the package into debian/backuppc.
+	# Add here commands to install the package into debian/eebackuppc4.
 	chmod 755 ./makeDist
 	./makeDist --releasedate "`date +'%d %b %Y'`" --version "4.2.0"
 
@@ -88,7 +88,7 @@ install: build
 			--config-dir /etc/backuppc \
 			--cgi-dir /usr/share/backuppc/cgi-bin \
 			--data-dir /var/lib/backuppc \
-			--dest-dir $(CURDIR)/debian/backuppc/ \
+			--dest-dir $(CURDIR)/debian/eebackuppc4/ \
 			--html-dir /usr/share/backuppc/image \
 			--html-dir-url /backuppc/image \
 			--install-dir /usr/share/backuppc; \
@@ -97,21 +97,21 @@ install: build
 	 )
 
         # TODO Some/most of this is obsolete with the --config-only option!
-	mv -f debian/backuppc/usr/share/backuppc/cgi-bin/* debian/backuppc/usr/share/backuppc/lib/realindex.cgi
-	install --mode=755 -D index.cgi debian/backuppc/usr/lib/backuppc/cgi-bin/index.cgi
-	install --mode=644 -D conf/hosts debian/backuppc/etc/backuppc/hosts
+	mv -f debian/eebackuppc4/usr/share/backuppc/cgi-bin/* debian/eebackuppc4/usr/share/backuppc/lib/realindex.cgi
+	install --mode=755 -D index.cgi debian/eebackuppc4/usr/lib/backuppc/cgi-bin/index.cgi
+	install --mode=644 -D conf/hosts debian/eebackuppc4/etc/backuppc/hosts
 
-	install --mode=644 debian/localhost.pl debian/backuppc/etc/backuppc
-	install --mode=644 debian/apache.conf debian/backuppc/etc/backuppc
-	-rm -rf debian/backuppc/var/lib/backuppc/conf/
-	mkdir -p debian/backuppc/usr/share/backuppc/cgi-bin
-	(cd debian/backuppc/usr/share/backuppc/cgi-bin; ln -s ../image; ln -s /usr/lib/backuppc/cgi-bin/index.cgi )
+	install --mode=644 debian/localhost.pl debian/eebackuppc4/etc/backuppc
+	install --mode=644 debian/apache.conf debian/eebackuppc4/etc/backuppc
+	-rm -rf debian/eebackuppc4/var/lib/backuppc/conf/
+	mkdir -p debian/eebackuppc4/usr/share/backuppc/cgi-bin
+	(cd debian/eebackuppc4/usr/share/backuppc/cgi-bin; ln -s ../image; ln -s /usr/lib/backuppc/cgi-bin/index.cgi )
 	patch --no-backup-if-mismatch -p0 < debian/config.pl.diff
-	mkdir -p debian/backuppc/usr/share/backuppc/conf/
-	install --mode=644 debian/backuppc/etc/backuppc/config.pl debian/backuppc/usr/share/backuppc/conf/
-	rm -rf debian/backuppc/etc/backuppc/config.pl debian/backuppc/etc/backuppc/config.pl.sample debian/backuppc/etc/backuppc/hosts.sample
-	mkdir debian/backuppc/var/lib/backuppc/conf
-	ln -s /etc/backuppc/config.pl debian/backuppc/var/lib/backuppc/conf/config.pl
+	mkdir -p debian/eebackuppc4/usr/share/backuppc/conf/
+	install --mode=644 debian/eebackuppc4/etc/backuppc/config.pl debian/eebackuppc4/usr/share/backuppc/conf/
+	rm -rf debian/eebackuppc4/etc/backuppc/config.pl debian/eebackuppc4/etc/backuppc/config.pl.sample debian/eebackuppc4/etc/backuppc/hosts.sample
+	mkdir debian/eebackuppc4/var/lib/backuppc/conf
+	ln -s /etc/backuppc/config.pl debian/eebackuppc4/var/lib/backuppc/conf/config.pl
 
 # Build architecture-independent files here.
 binary-indep: build install
@@ -122,21 +122,23 @@ binary-arch: build install
 	dh_testdir
 	dh_testroot
 #	dh_installdebconf	
-	mkdir -p debian/backuppc/usr/share/doc/backuppc
-	install --mode=644 debian/backuppc.doc-base debian/backuppc/usr/share/doc/backuppc/
-	dh_installexamples debian/examples/*
-	mv -f debian/backuppc/usr/share/backuppc/share/doc/* debian/backuppc/usr/share/doc/backuppc/
-	mv debian/backuppc/usr/share/doc/backuppc/BackupPC/* debian/backuppc/usr/share/doc/backuppc/
-	rmdir debian/backuppc/usr/share/doc/backuppc/BackupPC
-	mkdir debian/backuppc/usr/share/backuppc/share/doc/BackupPC
-	(cd debian/backuppc/usr/share/backuppc/share/doc/BackupPC; ln -s ../../../../doc/backuppc/BackupPC.html)
-	dh_installmenu
-	dh_installinit
-	dh_installcron
+	mkdir -p debian/eebackuppc4/usr/share/doc/backuppc
+	mkdir -p debian/eebackuppc4/usr/share/doc-base
+	install --mode=644 debian/eebackuppc4.doc-base debian/eebackuppc4/usr/share/doc-base/backuppc
+	mkdir -p debian/eebackuppc4/usr/share/doc/backuppc/examples
+	install --mode=644 debian/examples/* debian/eebackuppc4/usr/share/doc/backuppc/examples/
+	mv -f debian/eebackuppc4/usr/share/backuppc/share/doc/* debian/eebackuppc4/usr/share/doc/backuppc/
+	mv debian/eebackuppc4/usr/share/doc/backuppc/BackupPC/* debian/eebackuppc4/usr/share/doc/backuppc/
+	rmdir debian/eebackuppc4/usr/share/doc/backuppc/BackupPC
+	mkdir debian/eebackuppc4/usr/share/backuppc/share/doc/BackupPC
+	(cd debian/eebackuppc4/usr/share/backuppc/share/doc/BackupPC; ln -s ../../../../doc/backuppc/BackupPC.html)
+	mkdir -p debian/eebackuppc4/etc/init.d debian/eebackuppc4/etc/default
+	install --mode=644 debian/eebackuppc4.init debian/eebackuppc4/etc/init.d/backuppc
+	install --mode=644 debian/eebackuppc4.default debian/eebackuppc4/etc/default/backuppc
 	dh_installman buildroot/backuppc.8
-	dh_installinfo
 #	dh_undocumented
-	dh_installchangelogs ChangeLog
+	install --mode=644 debian/changelog debian/eebackuppc4/usr/share/doc/backuppc/changelog.Debian
+	install --mode=644 ChangeLog debian/eebackuppc4/usr/share/doc/backuppc/changelog
 	dh_link
 	dh_strip
 	dh_compress
@@ -144,7 +146,7 @@ binary-arch: build install
 	dh_installdebconf
 #	dh_makeshlibs
 	dh_installdeb
-	dh_perl $(CURDIR)/debian/backuppc/usr/share/backuppc/lib/
+	dh_perl $(CURDIR)/debian/eebackuppc4/usr/share/backuppc/lib/
 	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
