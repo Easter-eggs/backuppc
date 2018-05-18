@@ -11,6 +11,7 @@ Depends: ${shlibs:Depends}, ${perl:Depends}, libcgi-pm-perl, libdigest-md5-perl,
 Recommends: rsync, libfile-rsyncp-perl (>= 0.68), openssh-client | ssh-client, libio-dirent-perl, smbclient, samba-common-bin
 Suggests: w3m | www-browser, par2
 Replaces: backuppc
+Conflicts: backuppc
 Description: high-performance, enterprise-grade system for backing up PCs
  BackupPC is disk based and not tape based. This particularity allows
  features not found in any other backup solution:
