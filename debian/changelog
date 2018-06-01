@@ -1,3 +1,9 @@
+eebackuppc4 (4.2.0~eebpo90+5) stretch-ee; urgency=medium
+
+  * fix control file
+
+ -- Arnaud Virlet <avirlet@easter-eggs.com>  Thu, 18 May 2018 12:00:00 +0200
+
 eebackuppc4 (4.2.0~eebpo90+4) UNRELEASED; urgency=medium
 
   * fix broken package 
