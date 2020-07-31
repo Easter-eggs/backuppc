@@ -46,6 +46,7 @@ use Cwd;
 use Digest::MD5;
 use Config;
 use Encode qw/from_to encode_utf8/;
+use POSIX qw/_exit/;
 
 use BackupPC::Storage;
 use BackupPC::XS;
@@ -439,7 +440,7 @@ sub ServerConnect
     my $sockFile = "$bpc->{RunDir}/BackupPC.sock";
     socket(*FH, PF_UNIX, SOCK_STREAM, 0)     || return "unix socket: $!";
     if ( !connect(*FH, sockaddr_un($sockFile)) ) {
-        my $err = "unix connect: $!";
+        my $err = "unix connect to $sockFile: $!";
         close(*FH);
         if ( $port > 0 ) {
             my $proto = getprotobyname('tcp');
@@ -447,8 +448,8 @@ sub ServerConnect
             my $paddr = sockaddr_in($port, $iaddr);
 
             socket(*FH, PF_INET, SOCK_STREAM, $proto)
-                                             || return "inet socket: $!";
-            connect(*FH, $paddr)             || return "inet connect: $!";
+                                             || return "inet socket port $port: $!";
+            connect(*FH, $paddr)             || return "inet connect port $port: $!";
         } else {
             return $err;
         }
@@ -878,16 +879,17 @@ sub CheckHostAlive
 
 sub CheckFileSystemUsage
 {
-    my($bpc) = @_;
+    my($bpc, $inode) = @_;
     my($topDir) = $bpc->{TopDir};
     my($s, $dfCmd);
+    my $cmd = $inode ? "DfInodeUsageCmd" : "DfCmd";
 
-    return 0 if ( $bpc->{Conf}{DfCmd} eq "" );
+    return 0 if ( $bpc->{Conf}{$cmd} eq "" );
     my $args = {
 	dfPath   => $bpc->{Conf}{DfPath},
 	topDir   => $bpc->{TopDir},
     };
-    $dfCmd = $bpc->cmdVarSubstitute($bpc->{Conf}{DfCmd}, $args);
+    $dfCmd = $bpc->cmdVarSubstitute($bpc->{Conf}{$cmd}, $args);
     $s = $bpc->cmdSystemOrEval($dfCmd, undef, $args);
     return 0 if ( $? || $s !~ /(\d+)%/s );
     return $1;
@@ -1157,7 +1159,7 @@ sub cmdExecOrEval
 			if ( $bpc->{verbose} );
         eval($cmd);
         print(STDERR "Perl code fragment for exec shouldn't return!!\n");
-        exit(1);
+        POSIX::_exit(1);
     } else {
         $cmd = [split(/\s+/, $cmd)] if ( ref($cmd) ne "ARRAY" );
 	print(STDERR "cmdExecOrEval: about to exec ",
@@ -1170,7 +1172,7 @@ sub cmdExecOrEval
 	#
         exec { $cmd->[0] } @$cmd;
         print(STDERR "Exec failed for @$cmd\n");
-        exit(1);
+        POSIX::_exit(1);
     }
 }
 
@@ -1234,7 +1236,7 @@ sub cmdSystemOrEvalLong
 	    #
 	    exec { $cmd->[0] } @$cmd;
             print(STDERR "Exec of @$cmd failed\n");
-            exit(1);
+            POSIX::_exit(1);
 	}
 
 	#

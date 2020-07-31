@@ -1,3 +1,51 @@
+backuppc (4.3.2) stable; urgency=medium
+
+  * New release BackupPC 4.3.2.
+  * Pass the username to start-stop-daemon when reloading,
+    see Debian see Debian #944611 and PR #9
+  * Pass --no-set-perms to configure.pl PR #13
+  * Install generated man pages PR #12.
+
+ -- Raoul Bhatia <raoul@bhatia.at>  Sun, 21 Jun 2020 09:31:13 +0200
+
+backuppc (4.3.1) stable; urgency=medium
+
+  * New release BackupPC 4.3.1.
+
+ -- raoul <raoul@bhatia.at>  Tue, 16 Jul 2019 14:02:03 +0200
+
+backuppc (4.3.0) stable; urgency=medium
+
+  * New release BackupPC 4.3.0.
+  * Refresh patches.
+  * Depend on libtime-parsedate-perl
+    (Supsersedes libtime-modules-perl on Debian 8 and later)
+
+ -- Raoul Bhatia <raoul@bhatia.at>  Tue, 12 Mar 2019 10:17:32 +0100
+
+backuppc (4.2.1-1) stable; urgency=medium
+
+  * Cleanup patch files.
+  * Depend on libbackuppc-xs-perl
+    (new Debian package name for backuppc-xs).
+
+ -- Raoul Bhatia <raoul@bhatia.at>  Sat, 19 Jan 2019 22:41:35 +0100
+
+backuppc (4.2.1) stable; urgency=medium
+  * Merged pull request #195.
+  * Added new config variable $Conf{CgiUserDeleteBackupEnable} that
+    sets whether users and admins can delete backups via the CGI
+    interface. The default value is 0, which means it's disabled
+    for regular users but available for admins.
+  * Fixed delete backup bug in bin/BackupPC_Admin_SCGI reported by
+    Julian Zielke in issue #193.
+  * Added check to dirCacheFlush() in bin/BackupPC_tarExtract to skip files
+    that don't have attributes; reported by Tarak Patel.
+  * Removed extraneous duplicate variable assignment in lib/BackupPC/CGI/GeneralInfo.pm,
+    from @moisseev (#195).
+
+ -- Raoul Bhatia <raoul@bhatia.at>  Sat, 12 May 2018 17:32:00 +0200
+
 backuppc (4.2.0) stable; urgency=medium
 
   * Backups can now be deleted via the CGI interface, written by @moisseev (#160).

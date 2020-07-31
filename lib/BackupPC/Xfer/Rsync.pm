@@ -13,7 +13,7 @@
 #   Craig Barratt  <cbarratt@users.sourceforge.net>
 #
 # COPYRIGHT
-#   Copyright (C) 2002-2017  Craig Barratt
+#   Copyright (C) 2002-2020  Craig Barratt
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #
 #========================================================================
 #
-# Version 4.1.4, released 24 Nov 2017.
+# Version 4.3.2, released 19 Jan 2020.
 #
 # See http://backuppc.sourceforge.net.
 #
@@ -62,15 +62,16 @@ sub start
     my $conf = $t->{conf};
     my(@fileList, $rsyncArgs, $logMsg, $rsyncCmd);
     my $binDir = $t->{bpc}->BinDir();
+    my $shareNamePath = $t->shareName2Path($t->{shareName});
 
     alarm(0);
     #
     # We add a slash to the share name we pass to rsync
     #
-    ($t->{shareNameSlash} = "$t->{shareName}/") =~ s{//+$}{/};
+    ($t->{shareNameSlash} = "$shareNamePath/") =~ s{//+$}{/};
 
     if ( $t->{type} eq "restore" ) {
-	my $remoteDir = "$t->{shareName}/$t->{pathHdrDest}";
+	my $remoteDir = "$shareNamePath/$t->{pathHdrDest}";
 	$remoteDir    =~ s{//+}{/}g;
         my $filesFd;
         my $srcList;
@@ -127,25 +128,24 @@ sub start
                             if ( ref($conf->{RsyncSshArgs}) eq 'ARRAY' );
             push(@$rsyncArgs, @$srcList, "$t->{hostIP}:$remoteDir");
         } else {
-            my $pwFd;
-            $t->{pwFile} = "$conf->{TopDir}/pc/$t->{client}/.rsyncdpw$$";
-            if ( !length($conf->{RsyncdPasswd}) ) {
-                $t->{XferLOG}->write(\"\$Conf{RsyncdPasswd} is empty; host's rsyncd auth will fail\n");
-                $t->{_errStr} = "\$Conf{RsyncdPasswd} is empty; host's rsyncd auth will fail";
-                return;
+            if ( length($conf->{RsyncdPasswd}) ) {
+                my($pwFd, $ok);
+                $t->{pwFile} = "$conf->{TopDir}/pc/$t->{client}/.rsyncdpw$$";
+                if ( open($pwFd, ">", $t->{pwFile}) ) {
+                    $ok = 1;
+                    $ok = 0 if ( $ok && chmod(0400, $t->{pwFile}) != 1 );
+                    $ok = 0 if ( $ok && !binmode($pwFd) );
+                    $ok = 0 if ( $ok && syswrite($pwFd, $conf->{RsyncdPasswd}) != length($conf->{RsyncdPasswd}) );
+                    $ok = 0 if ( $ok && !close($pwFd) );
+                    push(@$rsyncArgs, "--password-file=$t->{pwFile}");
+                }
+                if ( !$ok ) {
+                    $t->{XferLOG}->write(\"Failed to open/create rsynd pw file $t->{pwFile} ($!)\n");
+                    $t->{_errStr} = "Failed to open/create rsynd pw file $t->{pwFile} ($!)";
+                    return;
+                }
             }
-            if ( open($pwFd, ">", $t->{pwFile}) ) {
-                chmod(0400, $t->{pwFile});
-                binmode($pwFd);
-                syswrite($pwFd, $conf->{RsyncdPasswd});
-                close($pwFd);
-                push(@$rsyncArgs, "--password-file=$t->{pwFile}");
-            } else {
-                $t->{XferLOG}->write(\"Failed to open/create rsynd pw file $t->{pwFile}\n");
-                $t->{_errStr} = "Failed to open/create rsynd pw file $t->{pwFile}";
-                return;
-            }
-            my $shareName = $t->{shareName};
+            #my $shareName = $t->{shareName};
             #from_to($shareName, "utf8", $conf->{ClientCharset})
             #                    if ( $conf->{ClientCharset} ne "" );
             if ( $conf->{RsyncdClientPort} != 873 ) {
@@ -163,12 +163,13 @@ sub start
         # Merge variables into $rsyncArgs
         #
         $rsyncArgs = $bpc->cmdVarSubstitute($rsyncArgs, {
-                            host      => $t->{host},
-                            hostIP    => $t->{hostIP},
-                            client    => $t->{client},
-			    shareName => $t->{shareName},
-                            confDir   => $conf->{ConfDir},
-                            sshPath   => $conf->{SshPath},
+                            host          => $t->{host},
+                            hostIP        => $t->{hostIP},
+                            client        => $t->{client},
+                            shareNameOrig => $t->{shareName},
+                            shareName     => $shareNamePath,
+                            confDir       => $conf->{ConfDir},
+                            sshPath       => $conf->{SshPath},
                         });
         #
         # create --bpc-bkup-merge list.  This is the list of backups that have to
@@ -321,11 +322,16 @@ sub start
             $logMsg = "full backup started for directory $t->{shareName}";
             if ( ref($conf->{RsyncFullArgsExtra}) eq 'ARRAY' ) {
                 push(@$rsyncArgs, @{$conf->{RsyncFullArgsExtra}});
-            } else {
+            } elsif ( ref($conf->{RsyncFullArgsExtra}) eq '' && $conf->{RsyncFullArgsExtra} ne "" ) {
                 push(@$rsyncArgs, $conf->{RsyncFullArgsExtra});
             }
         } else {
             $logMsg = "incr backup started for directory $t->{shareName}";
+            if ( ref($conf->{RsyncIncrArgsExtra}) eq 'ARRAY' ) {
+                push(@$rsyncArgs, @{$conf->{RsyncIncrArgsExtra}});
+            } elsif ( ref($conf->{RsyncIncrArgsExtra}) eq '' && $conf->{RsyncIncrArgsExtra} ne "" ) {
+                push(@$rsyncArgs, $conf->{RsyncIncrArgsExtra});
+            }
         }
         
         #
@@ -355,12 +361,13 @@ sub start
         # Merge variables into $rsyncArgs
         #
         $rsyncArgs = $bpc->cmdVarSubstitute($rsyncArgs, {
-                            host      => $t->{host},
-                            hostIP    => $t->{hostIP},
-                            client    => $t->{client},
-			    shareName => $t->{shareName},
-                            confDir   => $conf->{ConfDir},
-                            sshPath   => $conf->{SshPath},
+                            host          => $t->{host},
+                            hostIP        => $t->{hostIP},
+                            client        => $t->{client},
+                            shareNameOrig => $t->{shareName},
+                            shareName     => $shareNamePath,
+                            confDir       => $conf->{ConfDir},
+                            sshPath       => $conf->{SshPath},
                         });
 
         if ( $t->{XferMethod} eq "rsync" ) {
@@ -389,7 +396,7 @@ sub start
                 $t->{_errStr} = "Failed to open/create rsynd pw file $t->{pwFile}";
                 return;
             }
-            my $shareName = $t->{shareName};
+            my $shareName = $shareNamePath;
             #from_to($shareName, "utf8", $conf->{ClientCharset})
             #                    if ( $conf->{ClientCharset} ne "" );
             push(@$rsyncArgs, @fileList) if ( @fileList );
@@ -422,6 +429,7 @@ sub start
             '--bpc-log-level',      $conf->{XferLogLevel},
         );
     }
+    $logMsg .= " (client path $shareNamePath)" if ( $t->{shareName} ne $shareNamePath );
 
     #from_to($args->{shareName}, "utf8", $conf->{ClientCharset})
     #                        if ( $conf->{ClientCharset} ne "" );
@@ -544,6 +552,12 @@ sub run
                 if ( /failed verification -- update discarded./ ) {
                     $t->{xferBadFileCnt}++;
                 }
+                $t->{stats}{xferErrs}++;
+            }
+            if ( /^rsync error: / || /^rsync warning: / ) {
+                $t->{stats}{xferErrs}++;
+            }
+            if ( /^rsync: send_files failed to open / || /^file has vanished: / ) {
                 $t->{stats}{xferErrs}++;
             }
             if ( /^IOrename:\s(\d+)\s(.*)/ ) {

@@ -21,6 +21,195 @@
 # Version __VERSION__, __RELEASEDATE__
 #------------------------------------------------------------------------
 
+Merged pull requests #278, #281, #289, #295, #297, #307, #308, #311,
+  #312, #313, #314.
+
+* Added per-host read/write exclusivity to worker programs, so
+  command-line programs don't collide with backups or other
+  operations; reportde by @hamster65 (issue #299)
+
+* Added $Conf{RsyncIncrArgsExtra} (issue #284)
+
+* Added $Conf{ClientShareName2Path}, which allows mapping of share
+  names/path to real paths on the client (eg, to backup a snapshot
+  that's in a different directory to the share name path)
+
+* Fixed v3 digest calculation in bin/BackupPC_backupDuplicate and
+  bin/BackupPC_migrateV3toV4; reported by @palmtop (issue #291)
+  
+* Improved handling of BackupPC_nightly running for more than 24 hours:
+  drop next queued run, and provide better log messages; reported
+  by @guestisp (issue #303)
+
+* Improved error checking on $Conf{BackupPCNightlyPeriod}, and update
+  $Info->{NightlyPhase} if it's larger than $Conf{BackupPCNightlyPeriod};
+  reported by @guestisp (issue #304)
+
+* Fixed warnings in bin/BackupPC, submitted by @moisseev (#278)
+
+* Avoid rrd updates using the same time stamp, submitted by @moisseev
+  (#311, issue #305)
+
+* Removed unused counting of renamed files, submitted by @moisseev (#281)
+
+* Make tar xfer output parsing compatible with FreeBSD tar, submitted
+  by @haarp (#289)
+
+* Fix daemon stdin open to read mode, submitted by @moisseev (#308)
+
+* Hosts config editor table layout CGI fix, submitted by @steven-de-wit
+  (#297)
+
+* Fixes to French translation, submitted by @pjoubert- (#295)
+
+* Fixes to Italian translation, submitted by @guestisp (#314)
+
+* Updated comments for Apache 2.4 config in httpd/src/BackupPC.conf,
+  submitted by @NotAProfessionalDeveloper (#307)
+
+* Documentation update for SCGI prerequisite, submitted by @guestisp (#312)
+
+* Documentation update for nginx config, submitted by @guestisp (#313)
+
+#------------------------------------------------------------------------
+# Version 4.3.1, 14 Jul 2019
+#------------------------------------------------------------------------
+
+Merged pull request #240.
+
+* Fixed CGI host summary columns for new Comment value; reported by
+  @karlis-irmejs (#245).
+
+* Added support to BackupPC_tarCreate for PAX headers to allow large
+  metadata values to be correctly encoded; reported by @seblu (#254).
+
+* Fixed regexp in BackupPC so that versions like rsync-bpc 3.1.2beta0
+  are matched.  PR submitted by Adrien Ferrand (#240).
+
+* Added more details to error messages when failing to connect to
+  BackupPC server; reported by @dmak (#261).
+
+* bin/BackupPC Main_Initialize() checks if a BackupPC server is running
+  by trying to connect to it, in addition to existing check that PID
+  exists; reported by @toggoboge (#264).
+
+* Fixed utf8 encoded share names in deletion of orphan RsyncShareNames,
+  reported by @Yann79 (#266).
+
+* Fixed %Conf passing to perl code version of $bpc->cmdSystemOrEval;
+  reported by Jeff Kosowsky.
+
+* BackupPC_backupDelete removes files with BPC_FTYPE_DELETED from filled
+  merged backup; reported by Jeff Kosowsky.
+
+* added Data::Dumper SortKeys(1) to lib/BackupPC/Storage/Text.pm so that
+  config hash writes have repeatable order; suggested by @kr4ut (#275).
+
+* bin/BackupPC_archive: use $bpc->openPCLogFile() instead of manual LOG
+  file rotation
+
+* lib/BackupPC/CGI/Archive.pm: create client directory if it doesn't
+  exist
+
+#------------------------------------------------------------------------
+# Version 4.3.0, 25 Nov 2018
+#------------------------------------------------------------------------
+
+Merged pull requests #200, #208, #216, #217, #229, #230, #231, #232,
+  #233, #235.
+
+* Added checking of file system inode usage, with new configuration
+  settings $Conf{DfInodeUsageCmd} and $Conf{DfMaxInodeUsagePct}.
+
+* bin/BackupPC_tarExtract: fixes to hardlink handling on incrementals,
+  plus cleanup
+
+* bin/BackupPC_backupDuplicate: fixed directory creation for copying v3
+  backups.
+
+* bin/BackupPC_backupDelete: couple of inode-related bug fixes; also do
+  fsck if $Conf{RefCntFsck} != 0.
+
+* bin/BackupPC: fixed handling of dhcp hosts, reported by Jean-Marc.
+
+* bin/BackupPC: improved version check of rsync_bpc to allow period
+  before "beta", reported by @ktenney in issue #214.
+
+* Added $Conf{EMailAdminSubject} to allow the admin email subject to
+  be set.
+
+* Changed default $Conf{CgiDateFormatMMDD} to 2 (YYYY-MM-DD), submitted
+  by @moisseev (#231).
+
+* Allow multiple groups in $Conf{CgiAdminUserGroup}, submitted by
+  @moisseev (#235).
+
+* Improvements to html table sorting, and made more tables sortable,
+  submitted by @brenard and @moisseev (issue #199, PRs #200, #229, #230,
+  #232).
+
+* Add action type column to queue status page (#208), submitted by
+  @brenard.
+
+* lib/BackupPC/CGI/Summary.pm: host summary only reports age of completed
+  backups (not partial or active), suggested by Michael Selway.
+
+* lib/BackupPC/CGI/HostInfo.pm: show active backup as partial if there
+  is no job running (to handle case of abnormal exit of BackupPC),
+  reported by @8666 in issue #220.
+
+* systemd/src/backuppc.service: added ExecReload, submitted by
+  @opoplawski (#233).
+
+* lib/BackupPC/Xfer/Rsync.pm: empty $Conf{RsyncdPasswd} is no longer fatal;
+  removed remaining mentions of RsyncdAuthRequired from conf/config.pl
+  and lib/BackupPC/Config/Meta.pm; reported by @jooola in issue #224.
+
+* bin/BackupPC_dump: moved alarm($Conf{ClientTimeout}) to after all the
+  pre-backup code (including expiry, duplication etc of backups, which
+  could be slow) reprted by Michael Selway.
+
+* bin/BackupPC_refCntUpdate: added a couple of __bpc_progress_state__ prints
+  to improve status reporting during nightly (-m), reprted by Michael Selway.
+
+* lib/BackupPC/CGI/RSS.pm: added Disabled value to host info (copied from
+  $Conf{BackupsDisable}); suggested by @danielmotaleite (issue #222).
+
+* lib/BackupPC/Xfer/Rsync.pm: added checks for a couple of common rsync
+  file error and error exit messages that now increment the xferErrs count.
+
+* bin/BackupPC_tarExtract: errors related to a particular file are counted
+  as Xfer errors, rather than considered fatal.
+
+* bin/BackupPC_dump: added check that $LogFd is defined before using it.
+
+* lib/BackupPC/Lib.pm: replaced exit() with POSIX::_exit() so that object
+  destruction is skipped in the child process.  This fixes corruption of
+  the compressed XferLOG file if the exec of $Conf{DumpPostUserCmd} fails.
+
+* conf/config.pl: updated project home page to https://backuppc.github.io/backuppc
+  in email message footers.
+
+#------------------------------------------------------------------------
+# Version 4.2.1, 7 May 2018
+#------------------------------------------------------------------------
+
+Merged pull request #195.
+
+* Added new config variable $Conf{CgiUserDeleteBackupEnable} that
+  sets whether users and admins can delete backups via the CGI
+  interface. The default value is 0, which means it's disabled
+  for regular users but available for admins.
+
+* Fixed delete backup bug in bin/BackupPC_Admin_SCGI reported by 
+  Julian Zielke in issue #193.
+
+* Added check to dirCacheFlush() in bin/BackupPC_tarExtract to skip files
+  that don't have attributes; reported by Tarak Patel.
+
+* Removed extraneous duplicate variable assignment in lib/BackupPC/CGI/GeneralInfo.pm,
+  from @moisseev (#195).
+
 #------------------------------------------------------------------------
 # Version 4.2.0, 8 Apr 2018
 #------------------------------------------------------------------------

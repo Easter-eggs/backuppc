@@ -28,7 +28,7 @@
 #
 #========================================================================
 #
-# Version 4.1.3, released 3 Jun 2017.
+# Version 4.3.2, released 19 Jan 2020.
 #
 # See http://backuppc.sourceforge.net.
 #
@@ -167,7 +167,8 @@ sub start
     #
     # Convert the encoding type of the names if at all possible
     #
-    from_to( $args->{shareName}, "utf8", $conf->{ClientCharset} )
+    $t->{shareNamePath} = $t->shareName2Path($t->{shareName});
+    from_to( $args->{shareNamePath}, "utf8", $conf->{ClientCharset} )
                                 if ( $conf->{ClientCharset} ne "" );
 
     #
@@ -215,40 +216,32 @@ sub start
     }
     $t->logWrite("Binary command successful\n", 2);
 
-    eval { $ret = $t->{ftp}->cwd( $t->{shareName} ); };
+    eval { $ret = $t->{ftp}->cwd( $t->{shareNamePath} ); };
     if ( !$ret ) {
         $t->{_errStr} =
-            "Can't change working directory to $t->{shareName}: " . $t->{ftp}->message();
+            "Can't change working directory to $t->{shareNamePath}: " . $t->{ftp}->message();
         $t->{xferErrCnt}++;
         return;
     }
-    $t->logWrite("Set cwd to $t->{shareName}\n", 2);
-
-    eval { $t->{sharePath} = $t->{ftp}->pwd(); };
-    if ( $t->{sharePath} eq "" ) {
-        $t->{_errStr} =
-            "Can't retrieve full working directory of $t->{shareName}: $!";
-        $t->{xferErrCnt}++;
-        return;
-    }
-    $t->logWrite("Pwd returned as $t->{sharePath}\n", 2);
+    $t->logWrite("Set cwd to $t->{shareNamePath}\n", 2);
 
     #
     # log the beginning of action based on type
     #
     if ( $t->{type} eq 'restore' ) {
         $logMsg = "ftp restore for host $t->{host} started on directory "
-          . "$t->{shareName}\n";
+          . "$t->{shareName}";
 
     } elsif ( $t->{type} eq 'full' ) {
         $logMsg = "ftp full backup for host $t->{host} started on directory "
-          . "$t->{shareName}\n";
+          . "$t->{shareName}";
 
     } elsif ( $t->{type} eq 'incr' ) {
         $logMsg = "ftp incremental backup for $t->{host} started for directory "
-                . "$t->{shareName}\n";
+                . "$t->{shareName}";
     }
-    $t->logWrite($logMsg, 1);
+    $logMsg .= " (client path $t->{shareNamePath})" if ( $t->{shareName} ne $t->{shareNamePath} );
+    $t->logWrite($logMsg . "\n", 1);
 
     #
     # call the recursive function based on the type of action
@@ -399,7 +392,7 @@ sub restoreDir
 
     my $dirList = $view->dirAttrib($t->{bkupSrcNum}, $t->{bkupSrcShare}, $dirName);
 
-    (my $targetPath = "$t->{shareName}/$dirName") =~ s{//+}{/}g;
+    (my $targetPath = "$t->{shareNamePath}/$dirName") =~ s{//+}{/}g;
 
     my ( $fileName, $fileAttr, $fileType );
 
@@ -453,9 +446,9 @@ sub restoreFile
     my $fout;
 
     my $fileDest = ( $conf->{ClientCharset} ne "" )
-                 ? from_to( "$t->{shareName}//$fileName",
+                 ? from_to( "$t->{shareNamePath}//$fileName",
                             "utf8", $conf->{ClientCharset} )
-                 : "$t->{shareName}/$fileName";
+                 : "$t->{shareNamePath}/$fileName";
 
     $t->logWrite("restoreFile($fileName) -> $fileDest\n", 4);
 
@@ -681,9 +674,6 @@ sub remotels
             compress => $t->{compress},
         };
         $f->{linkname} = $linkname if ( defined($linkname) );
-
-	$f->{fullName} = "$t->{sharePath}/$f->{name}";
-	$f->{fullName} =~ s/\/+/\//g;
 
         $t->logWrite("remotels: adding name $f->{name}, type $f->{type} ($info->[1]), size $f->{size}, mode $f->{mode}, $uid/$gid\n", 4);
 
@@ -1087,53 +1077,73 @@ sub moveFileToOld
         # A new file will be created, so add delete attribute to old
         #
         if ( $AttrOld ) {
-            $t->logWrite("moveFileToOld $f->{name} (add delete attribute to old)\n", 5);
             $AttrOld->set($f->{name}, { type => BPC_FTYPE_DELETED });
+            $t->logWrite("moveFileToOld: added $f->{name} as BPC_FTYPE_DELETED in old\n", 5);
         }
         return;
     }
-    $t->logWrite("moveFileToOld $a->{name}, $f->{name}, links = $a->{nlinks}, type = $a->{type}\n", 5);
-    if ( $a->{nlinks} > 0 ) {
-        $a->{nlinks}--;
-        if ( $a->{nlinks} <= 0 ) {
-            $AttrNew->deleteInode($a->{inode});
-            $DeltaNew->update($a->{compress}, $a->{digest}, -1);
+    $t->logWrite("moveFileToOld: $a->{name}, $f->{name}, links = $a->{nlinks}, type = $a->{type}\n", 5);
+    if ( $a->{type} != BPC_FTYPE_DIR ) {
+        if ( $a->{nlinks} > 0 ) {
+            if ( $AttrOld ) {
+                if ( !$AttrOld->getInode($a->{inode}) ) {
+                    #
+                    # copy inode to old if it isn't already there
+                    #
+                    $AttrOld->setInode($a->{inode}, $a);
+                    $DeltaOld->update($a->{compress}, $a->{digest}, 1);
+                }
+                #
+                # copy to old - no need for refeence count update since
+                # inode is already there
+                #
+                $AttrOld->set($f->{name}, $a, 1) if ( !$AttrOld->get($f->{name}) );
+            }
+            $a->{nlinks}--;
+            if ( $a->{nlinks} <= 0 ) {
+                $AttrNew->deleteInode($a->{inode});
+                $DeltaNew->update($a->{compress}, $a->{digest}, -1);
+            } else {
+                $AttrNew->setInode($a->{inode}, $a);
+            }
         } else {
-            $AttrNew->setInode($a->{inode}, $a);
+            $DeltaNew->update($a->{compress}, $a->{digest}, -1);
+            if ( $AttrOld && !$AttrOld->get($f->{name}) && $AttrOld->set($f->{name}, $a, 1) ) {
+                $DeltaOld->update($a->{compress}, $a->{digest}, 1);
+            }
         }
+        $AttrNew->delete($f->{name});
     } else {
-        $DeltaNew->update($a->{compress}, $a->{digest}, -1)
-                                        if ( length($a->{digest}) );
-        if ( $AttrOld && $AttrOld->get($f->{name}) && $AttrOld->set($f->{name}, $a, 1) ) {
-            $DeltaOld->update($a->{compress}, $a->{digest}, 1);
-        }
-    }
-    $AttrNew->delete($f->{name});
-    if ( $a->{type} == BPC_FTYPE_DIR ) {
         if ( !$AttrOld || $AttrOld->get($f->{name}) ) {
             #
             # Delete the directory tree, including updating reference counts
             #
             my $pathNew = $AttrNew->getFullMangledPath($f->{name});
+            $t->logWrite("moveFileToOld(..., $f->{name}): deleting $pathNew\n", 3);
             BackupPC::DirOps::RmTreeQuiet($bpc, $pathNew, $a->{compress}, $DeltaNew, $AttrNew);
         } else {
             #
             # For a directory we need to move it to old, and copy
             # any inodes that are referenced below this directory.
+	    # Also update the reference counts for the moved files.
             #
             my $pathNew = $AttrNew->getFullMangledPath($f->{name});
             my $pathOld = $AttrOld->getFullMangledPath($f->{name});
             $t->logWrite("moveFileToOld(..., $f->{name}): renaming $pathNew to $pathOld\n", 5);
-            $AttrNew->flush(0, $f->{name});
-            BackupPC::XS::DirOps::refCountAll($pathNew, $a->{compress}, -1, $DeltaNew);
-            BackupPC::XS::DirOps::refCountAll($pathNew, $a->{compress},  1, $DeltaOld);
-            $t->copyInodes($f->{name});
             $t->pathCreate($pathOld);
+            $AttrNew->flush(0, $f->{name});
             if ( !rename($pathNew, $pathOld) ) {
-                $t->logWrite("moveFileToOld(..., $f->{name}): can't rename $pathNew to $pathOld\n", 1);
+                $t->logWrite(sprintf("moveFileToOld(..., %s: can't rename %s to %s ($!, %d, %d, %d)\n",
+                                      $f->{name}, $pathNew, $pathOld, -e $pathNew, -e $pathOld, -d $pathOld));
                 $t->{xferErrCnt}++;
+            } else {
+                BackupPC::XS::DirOps::refCountAll($pathOld, $a->{compress}, -1, $DeltaNew);
+                BackupPC::XS::DirOps::refCountAll($pathOld, $a->{compress},  1, $DeltaOld);
+                $t->copyInodes($f->{name});
+                $AttrOld->set($f->{name}, $a, 1);
             }
         }
+        $AttrNew->delete($f->{name});
     }
 }
 

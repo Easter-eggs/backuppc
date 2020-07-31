@@ -10,7 +10,7 @@
 #   Craig Barratt  <cbarratt@users.sourceforge.net>
 #
 # COPYRIGHT
-#   Copyright (C) 2005-2018  Craig Barratt
+#   Copyright (C) 2005-2020  Craig Barratt
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 #
 #========================================================================
 #
-# Version 4.2.0, released 18 Feb 2018.
+# Version 4.3.2, released 19 Jan 2020.
 #
 # See http://backuppc.sourceforge.net.
 #
@@ -69,6 +69,8 @@ our %ConfigMenu = (
             {text => "CfgEdit_Title_Pool_Filesystem_Limits"},
 	    {name => "DfCmd"},
 	    {name => "DfMaxUsagePct"},
+	    {name => "DfInodeUsageCmd"},
+	    {name => "DfMaxInodeUsagePct"},
 	    {name => "HardLinkMax"},
 
             {text => "CfgEdit_Title_Other_Parameters"},
@@ -125,6 +127,7 @@ our %ConfigMenu = (
             {name => "EMailNotifyMinDays"},
             {name => "EMailFromUserName"},
             {name => "EMailAdminUserName"},
+            {name => "EMailAdminSubject"},
             {name => "EMailUserDestDomain"},
 
             {text => "CfgEdit_Title_Email_User_Messages"},
@@ -168,6 +171,7 @@ our %ConfigMenu = (
 	    {name => "CgiUserUrlCreate"},
 
 	    {text => "CfgEdit_Title_User_Config_Editing"},
+	    {name => "CgiUserDeleteBackupEnable"},
 	    {name => "CgiUserConfigEditEnable"},
 	    {name => "CgiUserConfigEdit"},
         ],
@@ -180,6 +184,7 @@ our %ConfigMenu = (
             {name => "XferLogLevel"},
             {name => "ClientCharset"},
             {name => "ClientCharsetLegacy"},
+            {name => "ClientShareName2Path"},
             {name => "RefCntFsck"},
 
             ### Smb Settings
@@ -295,6 +300,8 @@ our %ConfigMenu = (
             {name => "RsyncArgsExtra",
                 visible => sub { return $_[0]->{XferMethod} =~ /rsync/; } },
             {name => "RsyncFullArgsExtra",
+                visible => sub { return $_[0]->{XferMethod} =~ /rsync/; } },
+            {name => "RsyncIncrArgsExtra",
                 visible => sub { return $_[0]->{XferMethod} =~ /rsync/; } },
             {name => "RsyncRestoreArgs",
                 visible => sub { return $_[0]->{XferMethod} =~ /rsync/; } },
@@ -1112,7 +1119,7 @@ EOF
             for ( my $i = 0 ; $i < @$varValue ; $i++ ) {
                 if ( @$varValue > 1 || $type->{emptyOk} ) {
                     $content .= <<EOF;
-<td class="border">
+<tr><td class="border">
 <input type="button" name="del_${varName}_zZ_$i" value="${EscHTML($Lang->{CfgEdit_Button_Delete})}"
     onClick="deleteSubmit('${varName}_zZ_$i')">
 </td>

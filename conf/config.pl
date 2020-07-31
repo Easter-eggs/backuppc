@@ -29,9 +29,9 @@
 #   Craig Barratt  <cbarratt@users.sourceforge.net>
 #
 # COPYRIGHT
-#   Copyright (C) 2001-2013  Craig Barratt
+#   Copyright (C) 2001-2018  Craig Barratt
 #
-#   See http://backuppc.sourceforge.net.
+#   See https://backuppc.github.io/backuppc
 #
 #========================================================================
 
@@ -91,8 +91,8 @@ $Conf{UmaskMode} = 027;
 
 #
 # Times at which we wake up, check all the PCs, and schedule necessary
-# backups.  Times are measured in hours since midnight.  Can be
-# fractional if necessary (eg: 4.25 means 4:15am).
+# backups.  Times are measured in hours since midnight local time.
+# Can be fractional if necessary (eg: 4.25 means 4:15am).
 #
 # If the hosts you are backing up are always connected to the network
 # you might have only one or two wakeups each night.  This will keep
@@ -272,6 +272,19 @@ $Conf{DfPath} = '';
 $Conf{DfCmd} = '$dfPath $topDir';
 
 #
+# Command to run df to get inode % usage.  The following variables are substituted
+# at run-time:
+#
+#   $dfPath      path to df ($Conf{DfPath})
+#   $topDir      top-level BackupPC data directory
+#
+# Note: all Cmds are executed directly without a shell, so the prog name
+# needs to be a full path and you can't include shell syntax like
+# redirection and pipes; put that in a script if you need it.
+#
+$Conf{DfInodeUsageCmd} = '$dfPath -i $topDir';
+
+#
 # Full path to various commands for archiving
 #
 $Conf{SplitPath} = '';
@@ -282,7 +295,7 @@ $Conf{Bzip2Path} = '';
 
 #
 # Maximum threshold for disk utilization on the __TOPDIR__ filesystem.
-# If the output from $Conf{DfPath} reports a percentage larger than
+# If the output from $Conf{DfCmd} reports a percentage larger than
 # this number then no new regularly scheduled backups will be run.
 # However, user requested backups (which are usually incremental and
 # tend to be small) are still performed, independent of disk usage.
@@ -290,6 +303,17 @@ $Conf{Bzip2Path} = '';
 # usage exceeds this number.
 #
 $Conf{DfMaxUsagePct} = 95;
+
+#
+# Maximum threshold for inode utilization on the __TOPDIR__ filesystem.
+# If the output from $Conf{DfInodeUsageCmd} reports a percentage larger
+# than this number then no new regularly scheduled backups will be run.
+# However, user requested backups (which are usually incremental and
+# tend to be small) are still performed, independent of disk usage.
+# Also, currently running backups will not be terminated when the disk
+# inode usage exceeds this number.
+#
+$Conf{DfMaxInodeUsagePct} = 95;
 
 #
 # List of DHCP address ranges we search looking for PCs to backup.
@@ -879,6 +903,26 @@ $Conf{ClientCharset} = '';
 #
 $Conf{ClientCharsetLegacy} = 'iso-8859-1';
 
+#
+# Optionally map the share name to a different path on the client when the
+# xfer program is run. This can be used if you create a snapshot on the client,
+# which has a different path to the real share name.  Or you could use simpler
+# names for the share instead of a path (eg: root, home, usr) and map them to
+# the real paths here.
+#
+# This should be a hash whose key is the share name used in $Conf{SmbShareName},
+# $Conf{TarShareName}, $Conf{RsyncShareName}, $Conf{FtpShareName}, and the
+# value is the string path name on the client.  When a backup or restore is
+# done, if there is no matching entry in $Conf{ClientShareName2Path}, or the
+# entry is empty, then the share name is not modified (so the default behavior
+# is unchanged).
+#
+# If you are using the rsyncd xfer method, then there is no need to use this
+# configuration setting (since rsyncd already supports mapping of share names
+# to paths in the client's rsyncd.conf).
+#
+$Conf{ClientShareName2Path} = { };
+
 ###########################################################################
 # Samba Configuration
 # (can be overwritten in the per-PC log file)
@@ -1165,6 +1209,9 @@ $Conf{RsyncBackupPCPath} = "/usr/bin/rsync_bpc";
 # to just allow ssh via a low-privileged user, and use sudo
 # in $Conf{RsyncClientPath}.
 #
+# The setting should only have two entries: "-e" and
+# everything else; don't add additoinal array elements.
+#
 # This setting only matters if $Conf{XferMethod} = 'rsync'.
 #
 $Conf{RsyncSshArgs} = [
@@ -1208,24 +1255,6 @@ $Conf{RsyncdUserName} = '';
 # (eg: /etc/rsyncd.secrets).
 #
 $Conf{RsyncdPasswd} = '';
-
-#
-# Additional arguments for a full rsync or rsyncd backup.
-#
-# The --checksum argument causes the client to send full-file checksum
-# for every file (meaning the client reads every file and computes the
-# checksum, which is sent with the file list).  On the server, rsync_bpc
-# will skip any files that have a matching full-file checksum, and size,
-# mtime and number of hardlinks.  Any file that has different attributes
-# will be updating using the block rsync algorithm.
-#
-# In V3, full backups applied the block rsync algorithm to every file,
-# which is a lot slower but a bit more conservative.  To get that
-# behavior, replace --checksum with --ignore-times.
-#
-$Conf{RsyncFullArgsExtra} = [
-            '--checksum',
-];
 
 #
 # Arguments to rsync for backup.  Do not edit the first set unless you
@@ -1291,6 +1320,30 @@ $Conf{RsyncArgs} = [
 #     ];
 #
 $Conf{RsyncArgsExtra} = [];
+
+#
+# Additional arguments for a full rsync or rsyncd backup.
+#
+# The --checksum argument causes the client to send full-file checksum
+# for every file (meaning the client reads every file and computes the
+# checksum, which is sent with the file list).  On the server, rsync_bpc
+# will skip any files that have a matching full-file checksum, and size,
+# mtime and number of hardlinks.  Any file that has different attributes
+# will be updating using the block rsync algorithm.
+#
+# In V3, full backups applied the block rsync algorithm to every file,
+# which is a lot slower but a bit more conservative.  To get that
+# behavior, replace --checksum with --ignore-times.
+#
+$Conf{RsyncFullArgsExtra} = [
+            '--checksum',
+];
+
+#
+# Additional arguments for an incremental rsync or rsyncd backup.
+#
+$Conf{RsyncIncrArgsExtra} = [
+];
 
 #
 # Arguments to rsync for restore.  Do not edit the first set unless you
@@ -1864,6 +1917,11 @@ $Conf{EMailFromUserName} = '';
 $Conf{EMailAdminUserName} = '';
 
 #
+# Subject for admin emails.  If empty, defaults to pre-4.2.2 values.
+#
+$Conf{EMailAdminSubject} = '';
+
+#
 # Destination domain name for email sent to users.  By default
 # this is empty, meaning email is sent to plain, unqualified
 # addresses.  Otherwise, set it to the destination domain, eg:
@@ -1971,19 +2029,19 @@ EOF
 # Administrative users have full access to all hosts, plus overall
 # status and log information.
 #
-# The administrative users are the union of the unix/linux group
-# $Conf{CgiAdminUserGroup} and the manual list of users, separated
-# by spaces, in $Conf{CgiAdminUsers}. If you don't want a group or
-# manual list of users set the corresponding configuration setting
-# to undef or an empty string.
+# The administrative users are the union of the list of unix/linux groups,
+# separated by spaces, in $Conf{CgiAdminUserGroup} and the list of users,
+# separated by spaces, in $Conf{CgiAdminUsers}. If you don't want a list of
+# groups or users set the corresponding configuration setting to undef or an
+# empty string.
 #
 # If you want every user to have admin privileges (careful!), set
 # $Conf{CgiAdminUsers} = '*'.
 #
 # Examples:
-#    $Conf{CgiAdminUserGroup} = 'admin';
+#    $Conf{CgiAdminUserGroup} = 'admin wheel';
 #    $Conf{CgiAdminUsers}     = 'craig celia';
-#    --> administrative users are the union of group admin, plus
+#    --> administrative users are the union of groups admin and wheel, plus
 #      craig and celia.
 #
 #    $Conf{CgiAdminUserGroup} = '';
@@ -2073,7 +2131,7 @@ $Conf{CgiUserUrlCreate}     = 'mailto:%s';
 # dates (MM/DD), a value of 2 uses full YYYY-MM-DD format, and zero
 # for international dates (DD/MM).
 #
-$Conf{CgiDateFormatMMDD} = 1;
+$Conf{CgiDateFormatMMDD} = 2;
 
 #
 # If set, the complete list of hosts appears in the left navigation
@@ -2170,6 +2228,16 @@ $Conf{CgiImageDirURL} = '';
 $Conf{CgiCSSFile} = 'BackupPC_stnd.css';
 
 #
+# Whether the user is allowed to delete backups. If set to a positive
+# value, the user will have a delete button for each backup on any
+# host they have permission to access.  If set to 0, only
+# administrators have access to the backup delete feature.
+# If set to a negative value, even admins will not be able
+# to use the delete feature.
+#
+$Conf{CgiUserDeleteBackupEnable} = 0;
+
+#
 # Whether the user is allowed to edit their per-PC config.
 #
 $Conf{CgiUserConfigEditEnable} = 1;
@@ -2205,13 +2273,15 @@ $Conf{CgiUserConfigEdit} = {
         ClientCharsetLegacy       => 1,
         ClientComment             => 1,
         ClientNameAlias           => 1,
+        ClientShareName2Path      => 1,
         ClientTimeout             => 1,
         CompressLevel             => 1,
         DumpPostShareCmd          => 0,
         DumpPostUserCmd           => 0,
         DumpPreShareCmd           => 0,
         DumpPreUserCmd            => 0,
-        EMailAdminUserName        => 1,
+        EMailAdminSubject         => 0,
+        EMailAdminUserName        => 0,
         EMailFromUserName         => 1,
         EMailHeaders              => 1,
         EMailNoBackupEverMesg     => 1,
@@ -2255,11 +2325,11 @@ $Conf{CgiUserConfigEdit} = {
         RsyncArgsExtra            => 1,
         RsyncBackupPCPath         => 0,
         RsyncClientPath           => 0,
-        RsyncdAuthRequired        => 1,
         RsyncdClientPort          => 1,
         RsyncdPasswd              => 1,
         RsyncdUserName            => 1,
         RsyncFullArgsExtra        => 1,
+        RsyncIncrArgsExtra        => 1,
         RsyncRestoreArgs          => 1,
         RsyncShareName            => 1,
         RsyncSshArgs              => 1,
