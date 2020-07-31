@@ -909,7 +909,7 @@ the command:
 You should also install rsync-bpc; the BackupPC package might include
 it already, but if not:
 
-    apt-get install rsync-bpc
+    apt-get install backuppc-rsync
 
 If those commands work, you can skip to Step 3.
 
