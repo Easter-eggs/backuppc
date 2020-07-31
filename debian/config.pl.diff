@@ -1,5 +1,5 @@
---- debian/backuppc/etc/backuppc/config.pl	2018-04-21 18:49:00.173167992 +0200
-+++ debian/backuppc/etc/backuppc/config.pl	2018-04-21 18:51:48.801503290 +0200
+--- debian/backuppc/etc/backuppc/config.pl	2020-07-31 13:40:20.044504281 +0200
++++ debian/backuppc/etc/backuppc/config.pl	2020-07-31 13:49:38.997844687 +0200
 @@ -41,7 +41,10 @@
  #
  # Host name on which the BackupPC server is running.
@@ -12,54 +12,36 @@
  
  #
  # TCP port number on which the BackupPC server listens for and accepts
-@@ -275,7 +278,7 @@
+@@ -303,7 +306,7 @@
  # Full path to various commands for archiving
  #
  $Conf{SplitPath} = '/usr/bin/split';
--$Conf{ParPath}   = '/usr/bin/par2';
+-$Conf{ParPath}   = '';
 +$Conf{ParPath}   = '/usr/bin/par2' if -x '/usr/bin/par2';
  $Conf{CatPath}   = '/bin/cat';
  $Conf{GzipPath}  = '/bin/gzip';
  $Conf{Bzip2Path} = '/bin/bzip2';
-@@ -325,7 +328,7 @@
- #
- # The BackupPC user.
- #
--$Conf{BackupPCUser} = '';
-+$Conf{BackupPCUser} = 'backuppc';
- 
- #
- # Important installation directories:
-@@ -924,7 +927,7 @@
- #
- # This setting only matters if $Conf{XferMethod} = 'smb'.
- #
--$Conf{SmbClientPath} = '/usr/bin/smbclient';
-+$Conf{SmbClientPath} = '';
- 
- #
- # Command to run smbclient for a full dump.
-@@ -1234,6 +1237,9 @@
+@@ -1276,6 +1279,9 @@
  $Conf{RsyncArgs} = [
-             '--super',
-             '--recursive',
-+            # --protect-args does not works with rrsync. Comment
-+            # it if you use rrsync. Drawback, special chars in
-+            # share names are not allowed.
-             '--protect-args',
-             '--numeric-ids',
-             '--perms',
-@@ -1314,6 +1320,9 @@
+     '--super',
+     '--recursive',
++    # --protect-args does not works with rrsync. Comment
++    # it if you use rrsync. Drawback, special chars in
++    # share names are not allowed.
+     '--protect-args',
+     '--numeric-ids',
+     '--perms',
+@@ -1377,6 +1383,9 @@
  $Conf{RsyncRestoreArgs} = [
-             '--recursive',
-             '--super',
-+            # --protect-args does not works with rrsync. Comment
-+            # it if you use rrsync. Drawback, special chars in
-+            # share names are not allowed.
-             '--protect-args',
-             '--numeric-ids',
-             '--perms',
-@@ -1508,7 +1517,7 @@
+     '--recursive',
+     '--super',
++    # --protect-args does not works with rrsync. Comment
++    # it if you use rrsync. Drawback, special chars in
++    # share names are not allowed.
+     '--protect-args',
+     '--numeric-ids',
+     '--perms',
+@@ -1579,7 +1588,7 @@
  # Full path for ssh. Security caution: normal users should not
  # allowed to write to this file or directory.
  #
@@ -68,34 +50,7 @@
  
  #
  # Full path for nmblookup. Security caution: normal users should not
-@@ -1517,7 +1526,7 @@
- # nmblookup is from the Samba distribution. nmblookup is used to get the
- # netbios name, necessary for DHCP hosts.
- #
--$Conf{NmbLookupPath} = '/usr/bin/nmblookup';
-+$Conf{NmbLookupPath} = '';
- 
- #
- # NmbLookup command.  Given an IP address, does an nmblookup on that
-@@ -1852,7 +1861,7 @@
- # handler this is either a plain name (eg: "admin") or a fully-qualified
- # name (eg: "admin@mydomain.com").
- #
--$Conf{EMailFromUserName} = '';
-+$Conf{EMailFromUserName} = 'backuppc';
- 
- #
- # Destination address to an administrative user who will receive a
-@@ -1861,7 +1870,7 @@
- # handler this is either a plain name (eg: "admin") or a fully-qualified
- # name (eg: "admin@mydomain.com").
- #
--$Conf{EMailAdminUserName} = '';
-+$Conf{EMailAdminUserName} = 'backuppc';
- 
- #
- # Destination domain name for email sent to users.  By default
-@@ -2022,7 +2031,7 @@
+@@ -2098,7 +2107,7 @@
  # Full URL of the BackupPC_Admin CGI script, or the configured path
  # for SCGI.  Used for links in email messages.
  #
