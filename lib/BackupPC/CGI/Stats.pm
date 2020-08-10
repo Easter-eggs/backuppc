@@ -6,7 +6,7 @@ use BackupPC::XS qw(:all);
 use BackupPC::CGI::Lib qw(:all);
 use BackupPC::View;
 use Encode qw/decode_utf8/;
-use JSON;
+use JSON::XS;
 
 sub action
 {
@@ -128,7 +128,7 @@ sub action
 
     # Print data
     print "Content-type: text/plain\n\n";
-    print to_json(\%all);
+    print encode_json(\%all);
     print "\n";
     return;
 

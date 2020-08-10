@@ -36,14 +36,14 @@ use Encode qw/decode_utf8/;
 use BackupPC::CGI::Lib qw(:all);
 use BackupPC::View;
 use BackupPC::XS qw(:all);
-use JSON;
+use JSON::XS;
 
 sub ErrorJSON {
     my ( $msg ) = @_;
     my %err;
     $err{-1} = $msg;
     print "Content-type: text/plain\n\n";
-    print to_json(\%err);
+    print encode_json(\%err);
     exit();
 }
 
@@ -207,7 +207,7 @@ sub action
     %{$all{data}} = %data;
     %{$all{tree}} = %tree;
     print "Content-type: text/plain\n\n";
-    print to_json(\%all);
+    print encode_json(\%all);
 }
 
 1;

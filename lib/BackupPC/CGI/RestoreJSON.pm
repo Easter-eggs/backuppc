@@ -42,14 +42,14 @@ use BackupPC::Xfer;
 use Data::Dumper;
 use File::Path;
 use Encode qw/decode_utf8/;
-use JSON;
+use JSON::XS;
 
 sub ErrorJSON {
     my ( $msg ) = @_;
     my %err;
     $err{-1} = $msg;
     print "Content-type: text/plain\n\n";
-    print to_json(\%err);
+    print encode_json(\%err);
     exit();
 }
 
@@ -231,7 +231,7 @@ EOF
 	$reply = $bpc->ServerMesg("restore ${EscURI($ipAddr)}"
 			. " ${EscURI($hostDest)} $User $reqFileName");
         print "Content-type: text/plain\n\n";
-        print to_json($reply);
+        print encode_json($reply);
         exit();
     }
 }

@@ -1,7 +1,8 @@
-backuppc (4.4.0~eebpo100+1) buster-ee; urgency=medium
+eebackuppc4 (4.4.0~eebpo100+1) buster-ee; urgency=medium
 
   * Non-maintainer upload.
   * Release 4.4.0 for buster
+  * Add EE Custom Page
 
  -- Arnaud Virlet <avirlet@easter-eggs.com>  Fri, 31 Jul 2020 11:12:54 +0200
 

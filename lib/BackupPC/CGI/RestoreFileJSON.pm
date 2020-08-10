@@ -41,14 +41,14 @@ use BackupPC::CGI::Lib qw(:all);
 use BackupPC::XS qw(:all);
 use BackupPC::View;
 use Encode qw/from_to decode_utf8/;
-use JSON;
+use JSON::XS;
 
 sub ErrorJSON {
     my ( $msg ) = @_;
     my %err;
     $err{-1} = $msg;
     print "Content-type: text/plain\n\n";
-    print to_json(\%err);
+    print encode_json(\%err);
     exit();
 }
 
