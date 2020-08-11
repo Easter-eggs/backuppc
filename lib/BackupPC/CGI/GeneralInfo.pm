@@ -10,7 +10,7 @@
 #   Craig Barratt  <cbarratt@users.sourceforge.net>
 #
 # COPYRIGHT
-#   Copyright (C) 2001-2013  Craig Barratt
+#   Copyright (C) 2001-2020  Craig Barratt
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 #
 #========================================================================
 #
-# Version 4.0.0alpha3, released 1 Dec 2013.
+# Version 4.3.3, released 5 Apr 2020.
 #
 # See http://backuppc.sourceforge.net.
 #
@@ -49,15 +49,15 @@ sub action
         next if ( $host eq $bpc->scgiJob );
         next if ( !$Privileged && !CheckPermission($host) );
         $Jobs{$host}{type} = $Status{$host}{type}
-                    if ( $Jobs{$host}{type} eq "" && defined($Status{$host}));
-        (my $cmd = $Jobs{$host}{cmd}) =~ s/$BinDir\///g;
+          if ( $Jobs{$host}{type} eq "" && defined($Status{$host}) );
+        (my $cmd     = $Jobs{$host}{cmd})     =~ s/$BinDir\///g;
         (my $xferPid = $Jobs{$host}{xferPid}) =~ s/,/, /g;
         $jobStr .= <<EOF;
 <tr><td class="border"> ${HostLink($host)} </td>
     <td align="center" class="border"> $Jobs{$host}{type} </td>
     <td align="center" class="border"> ${UserLink(defined($Hosts->{$host})
 					? $Hosts->{$host}{user} : "")} </td>
-    <td class="border"> $startTime </td>
+    <td class="border" data-date_format="$Conf{CgiDateFormatMMDD}"> $startTime </td>
     <td class="border"> $cmd </td>
     <td align="center" class="border"> $Jobs{$host}{pid} </td>
     <td align="center" class="border"> $xferPid </td>
@@ -67,21 +67,23 @@ EOF
         $jobStr .= "</tr>\n";
     }
     foreach my $host ( sort(keys(%Status)) ) {
-        next if ( $Status{$host}{reason} ne "Reason_backup_failed"
-		    && $Status{$host}{reason} ne "Reason_restore_failed"
-		    && (!$Status{$host}{userReq}
-			|| $Status{$host}{reason} ne "Reason_no_ping") );
+        next
+          if (
+               $Status{$host}{reason} ne "Reason_backup_failed"
+            && $Status{$host}{reason} ne "Reason_restore_failed"
+            && (  !$Status{$host}{userReq}
+                || $Status{$host}{reason} ne "Reason_no_ping")
+          );
         next if ( !$Privileged && !CheckPermission($host) );
         my $startTime = timeStamp2($Status{$host}{startTime});
         my($errorTime, $XferViewStr);
         if ( $Status{$host}{errorTime} > 0 ) {
             $errorTime = timeStamp2($Status{$host}{errorTime});
         }
-        if ( -f "$TopDir/pc/$host/SmbLOG.bad"
-                || -f "$TopDir/pc/$host/SmbLOG.bad.z"
-                || -f "$TopDir/pc/$host/XferLOG.bad"
-                || -f "$TopDir/pc/$host/XferLOG.bad.z"
-                ) {
+        if (   -f "$TopDir/pc/$host/SmbLOG.bad"
+            || -f "$TopDir/pc/$host/SmbLOG.bad.z"
+            || -f "$TopDir/pc/$host/XferLOG.bad"
+            || -f "$TopDir/pc/$host/XferLOG.bad.z" ) {
             $XferViewStr = <<EOF;
 <a href="$MyURL?action=view&type=XferLOGbad&host=${EscURI($host)}">$Lang->{XferLOG}</a>,
 <a href="$MyURL?action=view&type=XferErrbad&host=${EscURI($host)}">$Lang->{Errors}</a>
@@ -89,30 +91,33 @@ EOF
         } else {
             $XferViewStr = "";
         }
-        (my $shortErr = $Status{$host}{error}) =~ s/(.{48}).*/$1.../;   
+        (my $shortErr = $Status{$host}{error}) =~ s/(.{48}).*/$1.../;
         $statusStr .= <<EOF;
 <tr><td class="border"> ${HostLink($host)} </td>
     <td align="center" class="border"> $Status{$host}{type} </td>
     <td align="center" class="border"> ${UserLink(defined($Hosts->{$host})
 					? $Hosts->{$host}{user} : "")} </td>
-    <td align="right" class="border"> $startTime </td>
+    <td align="right" class="border" data-date_format="$Conf{CgiDateFormatMMDD}"> $startTime </td>
     <td class="border"> $XferViewStr </td>
-    <td align="right" class="border"> $errorTime </td>
+    <td align="right" class="border" data-date_format="$Conf{CgiDateFormatMMDD}"> $errorTime </td>
     <td class="border"> ${EscHTML($shortErr)} </td></tr>
 EOF
     }
-    my $now          = timeStamp2(time);
-    my $nextWakeupTime = timeStamp2($Info{nextWakeup});
-    my $DUlastTime   = timeStamp2($Info{DUlastValueTime});
-    my $DUmaxTime    = timeStamp2($Info{DUDailyMaxTime});
-    my $numBgQueue   = $QueueLen{BgQueue};
-    my $numUserQueue = $QueueLen{UserQueue};
-    my $numCmdQueue  = $QueueLen{CmdQueue};
+
+    my $now             = timeStamp2(time);
+    my $nextWakeupTime  = timeStamp2($Info{nextWakeup});
+    my $DUlastTime      = timeStamp2($Info{DUlastValueTime});
+    my $DUmaxTime       = timeStamp2($Info{DUDailyMaxTime});
+    my $DUInodemaxTime  = timeStamp2($Info{DUInodeDailyMaxTime});
+    my $numBgQueue      = $QueueLen{BgQueue};
+    my $numUserQueue    = $QueueLen{UserQueue};
+    my $numCmdQueue     = $QueueLen{CmdQueue};
     my $serverStartTime = timeStamp2($Info{startTime});
     my $configLoadTime  = timeStamp2($Info{ConfigLTime});
 
-    my $poolInfo     = genPoolInfo("pool4",  "pool",  \%Info);
-    my $cpoolInfo    = genPoolInfo("cpool4", "cpool", \%Info);
+    my $poolInfo  = genPoolInfo("pool4",  "pool",  \%Info);
+    my $cpoolInfo = genPoolInfo("cpool4", "cpool", \%Info);
+
     if ( $Info{pool4FileCnt} > 0 && $Info{cpool4FileCnt} > 0 ) {
         $poolInfo = <<EOF;
 <li>Uncompressed pool:
@@ -127,11 +132,9 @@ EOF
     } elsif ( $Info{cpool4FileCnt} > 0 ) {
         $poolInfo = $cpoolInfo;
     }
-    my $generalInfo = eval("qq{$Lang->{BackupPC_Server_Status_General_Info}}")
-                                if ( $Privileged );
     my $generalInfo = "";
     if ( $Privileged ) {
-        $generalInfo  = eval("qq{$Lang->{BackupPC_Server_Status_General_Info}}");
+        $generalInfo = eval("qq{$Lang->{BackupPC_Server_Status_General_Info}}");
         if ( -r "$LogDir/poolUsage4.png" && -r "$LogDir/poolUsage52.png" ) {
             $generalInfo .= <<EOF;
 <ul>
