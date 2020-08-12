@@ -97,7 +97,7 @@ install: build
 	 )
 
         # TODO Some/most of this is obsolete with the --config-only option!
-#	mv -f debian/eebackuppc4/usr/share/backuppc/cgi-bin/* debian/eebackuppc4/usr/share/backuppc/lib/realindex.cgi
+	mv -f debian/eebackuppc4/usr/share/backuppc/cgi-bin/* debian/eebackuppc4/usr/share/backuppc/lib/realindex.cgi
 	install --mode=755 -D index.cgi debian/eebackuppc4/usr/lib/backuppc/cgi-bin/index.cgi
 	install --mode=644 -D conf/hosts debian/eebackuppc4/etc/backuppc/hosts
 
