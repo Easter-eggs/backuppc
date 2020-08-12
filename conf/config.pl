@@ -1216,7 +1216,7 @@ $Conf{RsyncClientPath} = '/usr/bin/rsync';
 # version of rsync that is used on the server for rsync and rsyncd
 # transfers.
 #
-$Conf{RsyncBackupPCPath} = "/usr/bin/rsync_bpc";
+$Conf{RsyncBackupPCPath} = "/usr/libexec/backuppc-rsync/rsync_bpc";
 
 #
 # Ssh arguments for rsync to run ssh to connect to the client.
