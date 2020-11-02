@@ -11,7 +11,7 @@
 #   Benjamin Renard <brenard@easter-eggs.com>
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2009  Craig Barratt
+#   Copyright (C) 2003-2020  Craig Barratt
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -103,8 +103,8 @@ sub action
     $dir = "/$dir" if ( $dir !~ /^\// );
 
     # Store current share and path
-    $all{currentShare} = $share;
-    $all{currentPath} = $dir;
+    $all{currentShare} = decode_utf8($share);
+    $all{currentPath} = decode_utf8($dir);
 
     my $relDir  = $dir;
     my $currDir = undef;
@@ -118,6 +118,7 @@ sub action
     # This hash will be used to parse tree
     my %tree;
     my %subTree;
+    my $decoded_f;
 
     #
     # Loop up the directory tree until we hit the top.
@@ -133,6 +134,7 @@ sub action
         #
 	foreach my $f ( sort {uc($a) cmp uc($b)} keys(%$attr) ) {
             my($dirOpen, $path);
+            $decoded_f = decode_utf8($f);
 	    if ( $relDir eq "" ) {
 		$path = "/$f";
 	    } else {
@@ -142,16 +144,16 @@ sub action
 		$path  = "/";
 	    }
             $path =~ s{^/+}{/};
-            $path     =~ s/([^\w.\/-])/uc sprintf("%%%02X", ord($1))/eg;
+            $path = decode_utf8($path);
             $dirOpen  = 1 if ( defined($currDir) && $f eq $currDir );
             if ( $attr->{$f}{type} == BPC_FTYPE_DIR ) {
                 # Add in tree as empty hash (if not already present)
                 if (!exists $tree{$f}) {
                     my %fInfos;
-                    %{$tree{$f}}=%fInfos;
+                    %{$tree{$decoded_f}}=%fInfos;
                 }
                 # Put path key in tree element infos
-                $tree{$f}{path}=$path;
+                $tree{$decoded_f}{path}=$path;
             }
             if ( $relDir eq $dir ) {
                 #
@@ -165,7 +167,7 @@ sub action
                     $infos{backupNum} = $a->{backupNum};
                     $infos{size} = $a->{size};
                     $infos{path} = $path;
-                    %{$data{$f}} = %infos;
+                    %{$data{$decoded_f}} = %infos;
                 }
             }
         }
