@@ -47,7 +47,7 @@ sub ErrorJSON {
     my ( $msg ) = @_;
     my %err;
     $err{-1} = $msg;
-    print "Content-type: text/plain\n\n";
+    print "Content-type: application/json; charset=utf-8\n\n";
     print encode_json(\%err);
     exit();
 }

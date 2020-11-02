@@ -127,7 +127,7 @@ sub action
 
 
     # Print data
-    print "Content-type: text/plain\n\n";
+    print "Content-type: application/json; charset=utf-8\n\n";
     print encode_json(\%all);
     print "\n";
     return;
