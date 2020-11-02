@@ -10,7 +10,7 @@
 #   Craig Barratt  <cbarratt@users.sourceforge.net>
 #
 # COPYRIGHT
-#   Copyright (C) 2003-2009  Craig Barratt
+#   Copyright (C) 2003-2020  Craig Barratt
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 #
 #========================================================================
 #
-# Version 3.2.1, released 24 Apr 2011.
+# Version 4.3.3, released 5 Apr 2020.
 #
 # See http://backuppc.sourceforge.net.
 #
@@ -41,7 +41,7 @@ use BackupPC::CGI::Lib qw(:all);
 use BackupPC::Xfer;
 use Data::Dumper;
 use File::Path;
-use Encode qw/decode_utf8/;
+use Encode qw/encode/;
 use JSON::XS;
 
 sub ErrorJSON {
@@ -73,7 +73,8 @@ sub action
         ErrorJSON("Incorrect hostname");
     }
 
-    my $paths = decode_json($In{paths});
+    (my $json_paths = $In{paths}) =~ s/\\u([0-9a-f]{4})/eval "\"\\x{$1}\""/gie;
+    my $paths = decode_json(encode("utf8", $json_paths));
     foreach my $path ( @$paths ) {
         (my $name = $path) =~ s/%([0-9A-F]{2})/chr(hex($1))/eg;
         $badFileCnt++ if ( $name =~ m{(^|/)\.\.(/|$)} );
@@ -85,7 +86,6 @@ sub action
 	    }
 	}
         push(@fileList, $name);
-        $name = decode_utf8($name);
     }
     $badFileCnt++ if ( $In{pathHdr} =~ m{(^|/)\.\.(/|$)} );
     $badFileCnt++ if ( $In{num} =~ m{(^|/)\.\.(/|$)} );
