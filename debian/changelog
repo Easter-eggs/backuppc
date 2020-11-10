@@ -1,3 +1,9 @@
+backuppc (4.4.0-1~eebpo90+2) stretch-ee; urgency=medium
+
+  * Fix debian rules: remove --no-set-perms option for ./configure.pl
+
+ -- Arnaud Virlet <avirlet@easter-eggs.com>  Tue, 10 Nov 2020 10:27:56 +0100
+
 backuppc (4.4.0-1~eebpo90+1) stretch-ee; urgency=medium
 
   * Release 4.4.0 for stretch
